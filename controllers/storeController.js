@@ -47,6 +47,8 @@ exports.editStore = async (req, res) => {
 }
 
 exports.updateStore = async (req, res) => {
+  //Force location type to be Point because mongoose field defaults don't apply on update.
+  req.body.location.type = "Point";
   //find and update the store
   //findAndUpdate takes three params (query, data, options)
   const store = await Store.findOneAndUpdate({_id : req.params.id}, req.body, {
