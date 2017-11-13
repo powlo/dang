@@ -1,6 +1,44 @@
 const mongoose = require('mongoose');
-
 const Store = mongoose.model('Store');
+const multer = require('multer');
+const jimp = require('jimp');
+const uuid = require('uuid');
+
+const multerOptions = {
+  storage: multer.memoryStorage(),
+  fileFilter( req, file, next) {
+    const isPhoto = file.mimetype.startsWith('image/');
+    if (isPhoto) {
+      //we got a photo! Good.
+      next(null, true);
+    }
+    //No photo, errror, tell them why.
+    else {
+      next({message: 'This file type is not allowed.'}, false);
+    }
+  }
+}
+
+exports.upload = multer(multerOptions).single('photo');
+
+exports.resize = async (req, res, next) => {
+  if (!req.file) {
+    next();
+    return;
+  }
+  //get the file extension. Probably jpeg.
+  const extension = req.file.mimetype.split('/')[1];
+
+  //generate a unique identifier for the file name.
+  req.body.photo = `${uuid.v4()}.${extension}`;
+
+  //read and resize the file, then write to uploads.
+  const photo = await jimp.read(req.file.buffer);
+  await photo.resize(800, jimp.AUTO);
+  console.log(`File extension: ${req.body.photo}`);
+  await photo.write(`./public/uploads/${req.body.photo}`);
+  next();
+}
 
 exports.homePage = (req, res) => {
   console.log(req.name);
@@ -59,4 +97,13 @@ exports.updateStore = async (req, res) => {
   //redirect to the store and tell them it worked
   req.flash('success', `Successfully update <strong>${store.name}</strong>. <a href="/stores/${store.slug}">View Store.</a>`)
   res.redirect(`/stores/${store._id}/edit`)
+}
+
+exports.getStoreBySlug = async (req, res, next) => {
+  console.log("oh hi");
+  const store = await Store.findOne({slug: req.params.slug});
+
+  //Nothing found? Call the next middleware / route, which happens to be a 404 handler.
+  if (!store) return next();
+  res.render('store', {store: store, title: store.name});
 }
