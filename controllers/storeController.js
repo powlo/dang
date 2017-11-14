@@ -100,10 +100,24 @@ exports.updateStore = async (req, res) => {
 }
 
 exports.getStoreBySlug = async (req, res, next) => {
-  console.log("oh hi");
   const store = await Store.findOne({slug: req.params.slug});
 
   //Nothing found? Call the next middleware / route, which happens to be a 404 handler.
   if (!store) return next();
   res.render('store', {store: store, title: store.name});
+}
+
+exports.getStoresByTag = async (req, res) => {
+  //pull the tag from the query
+  tag = req.params.tag;
+
+  //if no url parameter, just get all stores with a tag
+  tagQuery = tag || {$exists: true};
+
+  //We want to make two queries asynchronously, so we fire them off
+  //and then use promise.all to wait for them *both* to complete.
+  tagsPromise = Store.getTagList();
+  storesPromise = Store.find({tags: tagQuery});
+  const [tags, stores ] = await Promise.all([tagsPromise, storesPromise]);
+  res.render('tags', {tag, tags, stores, title: "Tags"});
 }
