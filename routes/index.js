@@ -10,7 +10,7 @@ router.get('/', catchErrors(storeController.getStores));
 router.get('/stores', catchErrors(storeController.getStores));
 
 //Serve form to add a store
-router.get('/add', storeController.addStore);
+router.get('/add', authController.isLoggedIn, storeController.addStore);
 
 //Handle POST where user creates a new store.
 router.post('/add', 
@@ -33,14 +33,14 @@ router.get('/tags', catchErrors(storeController.getStoresByTag));
 router.get('/tags/:tag', catchErrors(storeController.getStoresByTag));
 
 router.get('/login', userController.loginForm);
+router.post('/login', authController.login);
+router.get('/logout', authController.logout);
+
 router.get('/register', userController.registerForm);
 
-//1. Validate the user
-//2. Register the user (create account)
-//3. Log them in.
 router.post('/register',
-  userController.validateRegister,
-  userController.register,
-  authController.login);
+  userController.validateRegister, //1. Validate the user
+  userController.register, //2. Register the user (create account)
+  authController.login); //3. Log them in.
 
 module.exports = router;
