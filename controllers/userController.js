@@ -1,3 +1,7 @@
+const mongoose = require('mongoose');
+const User = mongoose.model('User');
+const promisify = require('es6-promisify');
+
 exports.loginForm = (req,res) => {
   res.render('login', {title: "Login"});
 }
@@ -20,16 +24,23 @@ exports.validateRegister = (req, res, next) => {
   });
   req.checkBody('password', 'Password cannot be blank.').notEmpty();
   req.checkBody('password-confirm', 'You must confirm your password.').notEmpty();
-  req.checkBody('password-confirm', 'Passwords do not match.').equals(req.body.email);
+  req.checkBody('password-confirm', 'Passwords do not match.').equals(req.body.password);
 
   const errors = req.validationErrors();
 
   if (errors){
     req.flash('error', errors.map(err => err.msg));
-    req.render('register', {title: 'Register', body: req.body, flashes: req.flash()})
+    res.render('register', {title: 'Register', body: req.body, flashes: req.flash()})
     return;
   }
   next();
-  
+}
 
+exports.register = async (req, res, next) => {
+  const user = new User({email: req.body.email, name: req.body.name});
+  //User.register comes from passportLocalMongoose and handles account generation with password hash
+  //ES6 Promisify replaces this: User.register(user, request.body.password, function(err, user){});
+  const register = promisify(User.register, User);
+  await register(user, req.body.password);
+  next();
 }
