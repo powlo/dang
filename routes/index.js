@@ -43,4 +43,7 @@ router.post('/register',
   userController.register, //2. Register the user (create account)
   authController.login); //3. Log them in.
 
+router.get('/account', authController.isLoggedIn, userController.account);
+router.post('/account', catchErrors(userController.updateAccount));
+
 module.exports = router;
