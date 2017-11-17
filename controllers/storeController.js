@@ -35,13 +35,11 @@ exports.resize = async (req, res, next) => {
   //read and resize the file, then write to uploads.
   const photo = await jimp.read(req.file.buffer);
   await photo.resize(800, jimp.AUTO);
-  console.log(`File extension: ${req.body.photo}`);
   await photo.write(`./public/uploads/${req.body.photo}`);
   next();
 }
 
 exports.homePage = (req, res) => {
-  console.log(req.name);
 
   //Flashes only get sent on the *next* request.
   //This only works thanks to sessions, the flash is stored
@@ -54,6 +52,7 @@ exports.addStore = (req, res) => {
 }
 
 exports.createStore = async (req, res) => {
+  req.body.author = req.user._id;
   const store = new Store(req.body);
   await store.save();
   //Once the store is complete we indicate success
@@ -72,14 +71,17 @@ exports.getStores = async (req, res) => {
   //So {xyz : xyz} can be shortened to { xyz }
   res.render('stores', {title: "Stores", stores: stores});
 }
-
+const confirmOwner = (store, user) => {
+  if(!store.author.equals(user._id)) {
+    throw Error('You must own a store in order to edit it!');
+  }
+}
 exports.editStore = async (req, res) => {
   
   //Find the store given the id
   const store = await Store.findOne({_id: req.params.id});
-  
   //Confirm the requestor is the owner
-  
+  confirmOwner(store, req.user);
   //Render out the form
   res.render('editStore', {title: `Edit ${store.name}`, store: store});
 }
@@ -100,7 +102,7 @@ exports.updateStore = async (req, res) => {
 }
 
 exports.getStoreBySlug = async (req, res, next) => {
-  const store = await Store.findOne({slug: req.params.slug});
+  const store = await Store.findOne({slug: req.params.slug}).populate('author');
 
   //Nothing found? Call the next middleware / route, which happens to be a 404 handler.
   if (!store) return next();

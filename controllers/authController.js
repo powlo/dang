@@ -95,13 +95,12 @@ exports.update = async (req, res) => {
   }
 
   setPassword = promisify(user.setPassword, user);
-  await user.setPassword(req.body.password);
+  await setPassword(req.body.password);
 
   user.resetPasswordToken = undefined;
   user.resetPasswordExpires = undefined;
 
   const updatedUser = await user.save();
-
   await req.login(updatedUser);
   req.flash('success', 'Your password has been reset.');
   res.redirect('/');
