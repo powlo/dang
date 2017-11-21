@@ -123,3 +123,23 @@ exports.getStoresByTag = async (req, res) => {
   const [tags, stores ] = await Promise.all([tagsPromise, storesPromise]);
   res.render('tags', {tag, tags, stores, title: "Tags"});
 }
+
+exports.searchStores = async (req, res) => {
+  //req.params come from :xyz statements in the route
+  //req.query comes from ?a=b in the url
+
+  //$text allows a search on any fields that are indexed as text
+  const stores = await Store.find({
+    $text: {
+      $search: req.query.q
+    }
+  }, {
+    score: { $meta: 'textScore'}
+  })
+  .sort({ 
+    score: {$meta: 'textScore'}
+  });
+
+  res.json(stores);
+  
+}
