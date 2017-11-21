@@ -8,8 +8,8 @@ function autocomplete (addressInput, latInput, lngInput){
   //when the address input changes, populate lat lng.
   dropdown.addListener('place_changed', () => {
     const place = dropdown.getPlace();
-    lat.value = place.geometry.location.lat();
-    lng.value = place.geometry.location.lng();
+    latInput.value = place.geometry.location.lat();
+    lngInput.value = place.geometry.location.lng();
   })
 
   //prevent default behaviour (form submit) for address input

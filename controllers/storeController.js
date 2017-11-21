@@ -124,6 +124,10 @@ exports.getStoresByTag = async (req, res) => {
   res.render('tags', {tag, tags, stores, title: "Tags"});
 }
 
+exports.mapPage = (req, res) => {
+  res.render('map', {title: 'Map'});
+}
+//*** API Endpoints ***
 exports.searchStores = async (req, res) => {
   //req.params come from :xyz statements in the route
   //req.query comes from ?a=b in the url
@@ -141,5 +145,24 @@ exports.searchStores = async (req, res) => {
   });
 
   res.json(stores);
-  
 }
+
+exports.mapStores = async (req, res) => {
+  //massage data into something MongoDB recognises.
+  const coordinates = [req.query.lng, req.query.lat].map(parseFloat);
+
+  const q = {
+    location: {
+      $near: {
+        $geometry: {
+          type: 'point',
+          coordinates: coordinates
+        },
+        $maxDistance: 10000
+      }
+    }
+  }
+  const stores = await Store.find(q).select('slug name description location photo').limit(10);
+  res.json(stores);
+}
+
