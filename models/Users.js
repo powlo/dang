@@ -22,6 +22,14 @@ const userSchema = new mongoose.Schema({
     required: 'Please supply a name.',
     trim: true
   },
+
+  //A user has many "hearts" that are all Store Ids
+  hearts: [
+    {
+      type: mongoose.Schema.ObjectId, 
+      ref: 'Store'
+    }
+  ],
   resetPasswordToken: String,
   resetPasswordExpires: Date
 });

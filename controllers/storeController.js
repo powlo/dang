@@ -1,8 +1,10 @@
 const mongoose = require('mongoose');
-const Store = mongoose.model('Store');
 const multer = require('multer');
 const jimp = require('jimp');
 const uuid = require('uuid');
+
+const Store = mongoose.model('Store');
+const User = mongoose.model('User');
 
 const multerOptions = {
   storage: multer.memoryStorage(),
@@ -127,6 +129,13 @@ exports.getStoresByTag = async (req, res) => {
 exports.mapPage = (req, res) => {
   res.render('map', {title: 'Map'});
 }
+
+exports.getFavourites = async (req, res) => {
+  const stores = await Store.find({_id : {$in : req.user.hearts}});
+  res.render('stores', {title: 'Your favourites', stores: stores })
+}
+
+
 //*** API Endpoints ***
 exports.searchStores = async (req, res) => {
   //req.params come from :xyz statements in the route
@@ -166,3 +175,18 @@ exports.mapStores = async (req, res) => {
   res.json(stores);
 }
 
+/* api endpoint allowing the user to heart or unheart a store. */
+exports.heartStore = async (req, res) => {
+  const hearts = req.user.hearts.map(obj => obj.toString());
+  //dynamically determine if we want to remove (pull) or add to the set
+  const operator = hearts.includes(req.params.id) ? '$pull' : '$addToSet';
+  
+  //NB [xyz] is ES6 computed property name
+  //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Object_initializer
+  //{new: true} returns the updated object not the original. Weird.
+  const user = await User.findByIdAndUpdate(req.user._id,
+    {[operator] : {hearts: req.params.id}},
+    {new: true}
+  )
+  res.json(user);
+}
