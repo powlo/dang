@@ -40,6 +40,13 @@ const storeSchema = new mongoose.Schema({
     ref: 'User', //this is a reference to the User model.
     required: 'You must provide an author.'
   }
+},
+
+//Virtuals by default are not shown when converting to JSON or Object
+//eg when dumping to screen. This makes it so they are.
+{
+  toJSON: { virtuals : true },
+  toObject: { virtuals: true }
 });
 
 //Add indexes
@@ -78,5 +85,14 @@ storeSchema.statics.getTagList = function(){
     {$sort: {count: -1}} //and sort in descending order.
   ])
 }
+
+//find reviews where the store's '_id' === the reviews 'store' property.
+//A bit like a JOIN in SQL.
+//We can then "populate" the store with reviews.
+storeSchema.virtual('reviews', {
+  ref: 'Review',
+  localField: '_id', //which field on the store
+  foreignField: 'store' // which field on the review 
+})
 
 module.exports = mongoose.model('Store', storeSchema);

@@ -73,11 +73,13 @@ exports.getStores = async (req, res) => {
   //So {xyz : xyz} can be shortened to { xyz }
   res.render('stores', {title: "Stores", stores: stores});
 }
+
 const confirmOwner = (store, user) => {
   if(!store.author.equals(user._id)) {
     throw Error('You must own a store in order to edit it!');
   }
 }
+
 exports.editStore = async (req, res) => {
   
   //Find the store given the id
@@ -104,7 +106,7 @@ exports.updateStore = async (req, res) => {
 }
 
 exports.getStoreBySlug = async (req, res, next) => {
-  const store = await Store.findOne({slug: req.params.slug}).populate('author');
+  const store = await Store.findOne({slug: req.params.slug}).populate('author reviews');
 
   //Nothing found? Call the next middleware / route, which happens to be a 404 handler.
   if (!store) return next();
