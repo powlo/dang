@@ -54,13 +54,12 @@ router.post('/account/reset/:token',
 );
 
 router.get('/map', storeController.mapPage);
-
 router.get('/hearts', authController.isLoggedIn, catchErrors(storeController.getFavourites));
-
 router.post('/reviews/:id',
   authController.isLoggedIn,
   catchErrors(reviewController.addReview)
 );
+router.get('/top', catchErrors(storeController.getTopStores));
 
 //API routes
 router.get('/api/search', catchErrors(storeController.searchStores));

@@ -86,6 +86,28 @@ storeSchema.statics.getTagList = function(){
   ])
 }
 
+storeSchema.statics.getTopStores = function(){
+  return this.aggregate([
+    //Lookup stores and populate their reviews
+    {$lookup:
+      { from: 'reviews', localField: '_id', foreignField: 'store', as: 'reviews'}
+    },
+
+    //filter for only items that have two or more reviews
+    //reviews.1 means that a array[1] exists, ie there are at least 2
+    {$match: {'reviews.1': {$exists: true}}},
+
+    //add average review field
+    { $addFields: {
+      averageRating: {$avg: '$reviews.rating'}
+    }},
+    //sort it y the new average review field
+    {$sort: {averageRating: -1}},
+    //limit to 10
+    {$limit: 10}
+  ])
+}
+
 //find reviews where the store's '_id' === the reviews 'store' property.
 //A bit like a JOIN in SQL.
 //We can then "populate" the store with reviews.
@@ -94,5 +116,13 @@ storeSchema.virtual('reviews', {
   localField: '_id', //which field on the store
   foreignField: 'store' // which field on the review 
 })
+
+function autopopulate(next){
+  this.populate('reviews');
+  next();
+}
+
+storeSchema.pre('find', autopopulate);
+storeSchema.pre('findOne', autopopulate);
 
 module.exports = mongoose.model('Store', storeSchema);

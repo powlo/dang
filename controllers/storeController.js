@@ -192,3 +192,9 @@ exports.heartStore = async (req, res) => {
   )
   res.json(user);
 }
+
+exports.getTopStores = async (req, res) => {
+  //dont put complicated queries in the controller. It's better to put them in the model.
+  const stores = await Store.getTopStores();
+  res.render('topStores', {stores : stores, title: '★ Top Stores!'});
+}
