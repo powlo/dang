@@ -67,11 +67,23 @@ exports.createStore = async (req, res) => {
 }
 
 exports.getStores = async (req, res) => {
-  const stores = await Store.find();
+  //to do pagination we take the page out of the url and build our query around it.
+  const page = req.params.page || 1;
+  const limit = 4;
+  const skip = (page * limit) - limit;
 
+  const storePromise = Store.find().skip(skip).limit(limit).sort({created: 'desc'});
+  const countPromise = Store.count();
+  [stores, count] = await Promise.all([storePromise, countPromise]);
+
+  const pages = Math.ceil(count /limit);
   //NB ES6 allows you to give an implicit key / value expansion if they key is the same as the object.
   //So {xyz : xyz} can be shortened to { xyz }
-  res.render('stores', {title: "Stores", stores: stores});
+  if (!stores.length && skip) {
+    res.redirect(`/stores/page/${pages}`);
+    return;
+  }
+  res.render('stores', {title: "Stores", stores, count, page, pages});
 }
 
 const confirmOwner = (store, user) => {
